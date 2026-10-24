@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>GitHub 星标排行榜 · 总榜 / 年榜 / 月榜 / 周榜</title>
+<meta name="description" content="GitHub 高星项目排行榜：总榜、年榜、月榜、周榜，按类别筛选，支持搜索与排序，一键更新。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand-row">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">★</div>
+      <div class="brand-text">
+        <h1>GitHub 星标排行榜</h1>
+        <p class="sub">Stars Leaderboard · 总榜 / 年榜 / 月榜 / 周榜</p>
+      </div>
+    </div>
+
+    <div class="tools">
+      <label class="search-wrap">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input id="search" type="search" placeholder="搜索项目、语言或简介（按 / 聚焦）" autocomplete="off" spellcheck="false">
+      </label>
+      <select id="sort" class="select" aria-label="排序方式"></select>
+      <button id="refresh" class="btn primary" type="button" title="从 GitHub 重新拉取最新数据">
+        <span class="btn-icon">↻</span><span class="btn-text">更新</span>
+      </button>
+      <button id="theme" class="btn icon" type="button" title="切换深色 / 浅色">🌙</button>
+      <button id="settings-btn" class="btn icon" type="button" title="设置">⚙️</button>
+    </div>
+  </div>
+
+  <nav id="boards" class="boards" role="tablist" aria-label="榜单维度"></nav>
+  <div class="cats-row"><div id="cats" class="cats" role="group" aria-label="项目分类"></div></div>
+  <p id="board-desc" class="board-desc"></p>
+</header>
+
+<main>
+  <div id="banner" class="banner" hidden></div>
+  <div id="meta" class="meta"></div>
+  <section id="list" class="grid" aria-live="polite"></section>
+  <div id="empty" class="empty" hidden></div>
+  <button id="more" class="btn more" type="button" hidden>加载更多 ↓</button>
+</main>
+
+<footer class="app-footer">
+  <span>数据来自 <a href="https://docs.github.com/rest/search" target="_blank" rel="noopener noreferrer">GitHub Search API</a></span>
+  <span class="dot">·</span>
+  <span>月榜 / 周榜按「该时间段内<strong>新建</strong>仓库的星标数」排序</span>
+  <span class="dot">·</span>
+  <span>简介优先用中文，缺失时自动机翻或显示英文原文</span>
+</footer>
+
+<dialog id="settings-dialog" class="dialog">
+  <h2>设置</h2>
+  <p class="dialog-hint">所有设置只保存在你本机浏览器里，不会上传。</p>
+
+  <label class="field">
+    <span class="field-label">GitHub Token（可选）</span>
+    <input id="token-input" type="password" placeholder="ghp_xxx（只读公开仓库权限即可）" autocomplete="off" spellcheck="false">
+    <span class="field-hint">不填也能用：未登录额度为 10 次搜索/分钟、60 次/小时；填了额度高很多。</span>
+  </label>
+
+  <label class="field">
+    <span class="field-label">API 代理前缀（可选）</span>
+    <input id="api-base-input" type="text" placeholder="例如 https://gh-proxy.com/" autocomplete="off" spellcheck="false">
+    <span class="field-hint">如果你所在网络访问 GitHub 不稳定，可填自己的反代前缀，程序会拼成 <code>前缀 + https://api.github.com</code>。留空则自动依次尝试官方 API 和几个公共镜像。</span>
+  </label>
+
+  <label class="check">
+    <input id="translate-input" type="checkbox">
+    <span>用机器翻译补全缺失的中文简介（需要联网）</span>
+  </label>
+
+  <div class="dialog-actions">
+    <button id="clear-cache" class="btn ghost" type="button">清除本地缓存</button>
+    <span class="spacer"></span>
+    <button id="dialog-close" class="btn ghost" type="button">取消</button>
+    <button id="save-settings" class="btn primary" type="button">保存并刷新</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="core.js"></script>
+<script src="snapshot.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
