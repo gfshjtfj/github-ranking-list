@@ -2,7 +2,9 @@
 
 一个**单页、零依赖、无需构建**的 GitHub 高星项目排行榜：总榜 / 年榜 / 月榜 / 周榜，可按类别筛选、搜索、排序，右上角一键更新，桌面和手机都能用，支持深色模式。
 
-> **在线体验**：https://your-name.github.io/github-star-ranking/ ← 部署到 GitHub Pages 后把这里换成你的地址
+> **在线体验**：这里要填你自己的 Pages 地址，格式是 `https://<你的用户名>.github.io/<仓库名>/`。
+> 开启 Pages 成功后，地址会显示在仓库 **Settings → Pages** 页面顶部（`Your site is live at …`），把那串地址替换上来即可。
+> 只有在 Pages 已经构建成功的前提下这个地址才打得开，否则一律是 404。
 
 本地直接双击 `index.html` 就能打开（不需要装环境、不需要起服务）。
 
@@ -97,9 +99,17 @@ github-star-ranking/
 
 1. 把代码推到 GitHub 仓库（分支 `main`）。
 2. 仓库页 → **Settings** → 左侧 **Pages** → *Build and deployment* 里 Source 选 **Deploy from a branch**，Branch 选 **main** + **/(root)**，点 **Save**。
-3. 等 1–2 分钟，页面顶部会出现 `https://<用户名>.github.io/<仓库名>/`，这就是演示地址。
+3. 等 1–2 分钟并刷新，页面顶部出现 `Your site is live at …`，那个地址就是演示地址；同一页的 **Visit site** 按钮也能直接打开。
 
 项目全部用相对路径，放在子目录下也能正常工作；`.nojekyll` 已经放好，不需要构建步骤。
+
+**打开是 404 时按顺序检查**：
+
+- Pages 页面顶部有没有 `Your site is live at …`？没有就是还没构建完（再等 1–2 分钟）或没点 Save。
+- 分支选的是不是 `main`、目录是不是 `/ (root)`？选错就会 404。
+- 仓库里 `index.html` 是否在**根目录**（不是套在 `github-star-ranking/` 子目录里）？网页上传时多套一层目录最容易踩这个坑。
+- 仓库 **Actions** 标签里有没有失败的 `pages build and deployment`？失败点进去看报错。
+- 仓库是 Private 的话，Pages 需要 Pro/Team 才能用；公开仓库免费。
 
 ## 自测
 
