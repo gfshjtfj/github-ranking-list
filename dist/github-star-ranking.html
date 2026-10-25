@@ -1,0 +1,2181 @@
+<!--
+  单文件版（由 tools/build-standalone.mjs 自动生成，别直接改这个文件）
+  双击即可在浏览器打开：联网时拉 GitHub 实时数据，断网时用内置快照。
+-->
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>GitHub 星标排行榜 · 总榜 / 年榜 / 月榜 / 周榜</title>
+<meta name="description" content="GitHub 高星项目排行榜：总榜、年榜、月榜、周榜，按类别筛选，支持搜索与排序，一键更新。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+<style>
+/* ============================================================
+   GitHub 星标排行榜 —— 样式
+   浅色/深色主题变量 + 响应式网格
+   ============================================================ */
+
+:root {
+  --bg: #f5f6f8;
+  --bg-soft: #eceef2;
+  --panel: #ffffff;
+  --panel-2: #f8fafc;
+  --text: #0f172a;
+  --text-2: #334155;
+  --muted: #64748b;
+  --border: #e2e6ec;
+  --border-strong: #cfd6e0;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.10);
+  --star: #f59e0b;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
+  --radius: 14px;
+  --header-bg: rgba(245, 246, 248, .86);
+}
+
+html[data-theme="dark"] {
+  --bg: #0a101c;
+  --bg-soft: #0f172a;
+  --panel: #121c2f;
+  --panel-2: #16223a;
+  --text: #e7eefb;
+  --text-2: #c3cfe2;
+  --muted: #8fa1bd;
+  --border: #1e2b42;
+  --border-strong: #2b3b57;
+  --accent: #5b9bff;
+  --accent-soft: rgba(91, 155, 255, .14);
+  --star: #fbbf24;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .35);
+  --header-bg: rgba(10, 16, 28, .85);
+}
+
+* { box-sizing: border-box; }
+
+/* 组件里用 display:flex/block 会盖过浏览器默认的 [hidden]，这里统一兜住 */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: hidden; /* 兜住窄屏下某个子元素意外超出，避免整页横向滚动 */
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ------------------------------ 头部 ------------------------------ */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 14px clamp(14px, 3vw, 32px) 10px;
+  background: var(--header-bg);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  justify-content: space-between;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.logo {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  font-size: 20px;
+  color: #fff;
+  background: linear-gradient(140deg, #f59e0b, #ef4444 55%, #8b5cf6);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, .25);
+  flex: none;
+}
+
+.brand-text { min-width: 0; }
+
+h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  white-space: nowrap;
+}
+
+.sub {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1 1 420px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1 1 240px;
+  max-width: 420px;
+  min-width: 0;
+  display: block;
+}
+
+.search-icon {
+  position: absolute;
+  left: 11px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: .55;
+  pointer-events: none;
+}
+
+#search {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+#search::placeholder { color: var(--muted); }
+
+#search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.select {
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13.5px;
+  outline: none;
+  cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.select:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .12s, background .15s, border-color .15s, box-shadow .15s;
+  white-space: nowrap;
+}
+
+.btn:hover { border-color: var(--border-strong); background: var(--panel-2); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .6; cursor: default; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.btn.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 14px var(--accent-soft);
+}
+
+.btn.primary:hover { filter: brightness(1.06); background: var(--accent); }
+
+.btn.icon { width: 38px; padding: 0; font-size: 15px; }
+
+.btn.ghost { background: transparent; }
+
+.btn.primary.loading .btn-icon { animation: spin 1s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ------------------------------ 榜单切换 ------------------------------ */
+
+.boards {
+  display: flex;
+  gap: 6px;
+  max-width: 1500px;
+  margin: 12px auto 0;
+  padding: 5px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.boards::-webkit-scrollbar { display: none; }
+
+.board-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 18px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, color .15s;
+}
+
+.board-tab:hover { color: var(--text); }
+
+.board-name { font-size: 14.5px; font-weight: 600; }
+.board-sub { font-size: 11px; opacity: .8; }
+
+.board-tab.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .1);
+}
+
+.board-tab.active .board-sub { color: var(--accent); opacity: 1; }
+
+/* ------------------------------ 分类 chips ------------------------------ */
+
+.cats-row {
+  max-width: 1500px;
+  margin: 10px auto 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cats-row::-webkit-scrollbar { display: none; }
+
+.cats { display: flex; gap: 7px; padding: 2px; width: max-content; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.chip:hover { border-color: var(--border-strong); }
+
+.chip.active {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 10px var(--accent-soft);
+}
+
+.chip.dim { opacity: .45; }
+
+.chip-n {
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--bg-soft);
+  color: var(--muted);
+}
+
+.chip.active .chip-n { background: rgba(255, 255, 255, .22); color: #fff; }
+
+.board-desc {
+  max-width: 1500px;
+  margin: 8px auto 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ------------------------------ 主区域 ------------------------------ */
+
+main {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 14px clamp(14px, 3vw, 32px) 40px;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid #f0c46a;
+  background: rgba(245, 158, 11, .12);
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.banner-icon { font-size: 15px; }
+
+.banner-btn {
+  margin-left: auto;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.meta b { color: var(--text); font-variant-numeric: tabular-nums; }
+.meta .dot { opacity: .5; }
+.meta .rate-hint { opacity: .8; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 12px;
+}
+
+/* ------------------------------ 卡片 ------------------------------ */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 15px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+  min-width: 0;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.rank {
+  flex: none;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--bg-soft);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.rank.gold { background: linear-gradient(140deg, #fde68a, #f59e0b); color: #4a2c00; }
+.rank.silver { background: linear-gradient(140deg, #e5e7eb, #9aa4b2); color: #1f2937; }
+.rank.bronze { background: linear-gradient(140deg, #f0c39a, #b45309); color: #3d1d00; }
+
+.repo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.repo:hover { color: var(--accent); text-decoration: none; }
+
+.stars {
+  flex: none;
+  color: var(--star);
+  font-weight: 700;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.desc {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.1em;
+}
+
+.desc.is-en { color: var(--muted); font-style: italic; }
+
+.en-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag.cat { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+.lang-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.topics { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.topic {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px dashed var(--border-strong);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* 骨架屏 */
+.card.skeleton { pointer-events: none; gap: 10px; }
+
+.sk-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg-soft) 25%, var(--panel-2) 37%, var(--bg-soft) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.sk-line.w40 { width: 40%; }
+.sk-line.w60 { width: 60%; }
+.sk-line.w90 { width: 90%; }
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ------------------------------ 空态 / 更多 ------------------------------ */
+
+.empty {
+  padding: 56px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+.more {
+  display: block;
+  margin: 18px auto 0;
+  min-width: 160px;
+}
+
+/* ------------------------------ 页脚 ------------------------------ */
+
+.app-footer {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 clamp(14px, 3vw, 32px) 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.app-footer strong { color: var(--text-2); font-weight: 600; }
+
+/* ------------------------------ 设置弹窗 ------------------------------ */
+
+.dialog {
+  width: min(560px, calc(100vw - 28px));
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+}
+
+.dialog::backdrop { background: rgba(5, 10, 20, .5); backdrop-filter: blur(2px); }
+
+.dialog h2 { margin: 0 0 4px; font-size: 17px; }
+
+.dialog-hint { margin: 0 0 16px; font-size: 12.5px; color: var(--muted); }
+
+.field { display: block; margin-bottom: 14px; }
+
+.field-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+
+.field input[type="text"],
+.field input[type="password"] {
+  width: 100%;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  outline: none;
+}
+
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.field-hint { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+.field-hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--bg-soft);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  margin: 4px 0 18px;
+  cursor: pointer;
+}
+
+.check input { margin-top: 3px; width: 15px; height: 15px; accent-color: var(--accent); }
+
+.dialog-actions { display: flex; align-items: center; gap: 8px; }
+.dialog-actions .spacer { flex: 1; }
+
+/* ------------------------------ 提示条 ------------------------------ */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translate(-50%, 20px);
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 13.5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s, transform .18s;
+  z-index: 60;
+  text-align: center;
+}
+
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ------------------------------ 响应式 ------------------------------ */
+
+@media (max-width: 900px) {
+  .tools { flex: 1 1 100%; justify-content: flex-start; }
+  .search-wrap { flex: 1 1 100%; max-width: none; }
+  .select { flex: 1 1 150px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .app-header { padding: 10px 12px 8px; }
+  h1 { font-size: 16.5px; }
+  .sub { font-size: 11px; }
+  .logo { width: 34px; height: 34px; font-size: 17px; border-radius: 10px; }
+  .boards { width: 100%; justify-content: space-between; }
+  .board-tab { padding: 5px 8px; flex: 1 1 0; min-width: 0; }
+  .board-name { font-size: 13.5px; }
+  .board-sub { font-size: 10px; }
+  .select { flex: 1 1 auto; }
+  .btn.primary { width: 38px; padding: 0; flex: none; }
+  .btn.primary .btn-icon { font-size: 16px; }
+  .btn-text { display: none; }
+  .btn.icon { flex: none; }
+  .banner { align-items: flex-start; }
+  .banner-btn { margin-left: 0; }
+  main { padding: 10px 12px 32px; }
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+  .dialog-actions { flex-wrap: wrap; }
+  .dialog-actions .spacer { flex: 1 0 100%; order: 3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand-row">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">★</div>
+      <div class="brand-text">
+        <h1>GitHub 星标排行榜</h1>
+        <p class="sub">Stars Leaderboard · 总榜 / 年榜 / 月榜 / 周榜</p>
+      </div>
+    </div>
+
+    <div class="tools">
+      <label class="search-wrap">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input id="search" type="search" placeholder="搜索项目、语言或简介（按 / 聚焦）" autocomplete="off" spellcheck="false">
+      </label>
+      <select id="sort" class="select" aria-label="排序方式"></select>
+      <button id="refresh" class="btn primary" type="button" title="从 GitHub 重新拉取最新数据">
+        <span class="btn-icon">↻</span><span class="btn-text">更新</span>
+      </button>
+      <button id="theme" class="btn icon" type="button" title="切换深色 / 浅色">🌙</button>
+      <button id="settings-btn" class="btn icon" type="button" title="设置">⚙️</button>
+    </div>
+  </div>
+
+  <nav id="boards" class="boards" role="tablist" aria-label="榜单维度"></nav>
+  <div class="cats-row"><div id="cats" class="cats" role="group" aria-label="项目分类"></div></div>
+  <p id="board-desc" class="board-desc"></p>
+</header>
+
+<main>
+  <div id="banner" class="banner" hidden></div>
+  <div id="meta" class="meta"></div>
+  <section id="list" class="grid" aria-live="polite"></section>
+  <div id="empty" class="empty" hidden></div>
+  <button id="more" class="btn more" type="button" hidden>加载更多 ↓</button>
+</main>
+
+<footer class="app-footer">
+  <span>数据来自 <a href="https://docs.github.com/rest/search" target="_blank" rel="noopener noreferrer">GitHub Search API</a></span>
+  <span class="dot">·</span>
+  <span>月榜 / 周榜按「该时间段内<strong>新建</strong>仓库的星标数」排序</span>
+  <span class="dot">·</span>
+  <span>简介优先用中文，缺失时自动机翻或显示英文原文</span>
+</footer>
+
+<dialog id="settings-dialog" class="dialog">
+  <h2>设置</h2>
+  <p class="dialog-hint">所有设置只保存在你本机浏览器里，不会上传。</p>
+
+  <label class="field">
+    <span class="field-label">GitHub Token（可选）</span>
+    <input id="token-input" type="password" placeholder="ghp_xxx（只读公开仓库权限即可）" autocomplete="off" spellcheck="false">
+    <span class="field-hint">不填也能用：未登录额度为 10 次搜索/分钟、60 次/小时；填了额度高很多。</span>
+  </label>
+
+  <label class="field">
+    <span class="field-label">API 代理前缀（可选）</span>
+    <input id="api-base-input" type="text" placeholder="例如 https://gh-proxy.com/" autocomplete="off" spellcheck="false">
+    <span class="field-hint">如果你所在网络访问 GitHub 不稳定，可填自己的反代前缀，程序会拼成 <code>前缀 + https://api.github.com</code>。留空则自动依次尝试官方 API 和几个公共镜像。</span>
+  </label>
+
+  <label class="check">
+    <input id="translate-input" type="checkbox">
+    <span>用机器翻译补全缺失的中文简介（需要联网）</span>
+  </label>
+
+  <div class="dialog-actions">
+    <button id="clear-cache" class="btn ghost" type="button">清除本地缓存</button>
+    <span class="spacer"></span>
+    <button id="dialog-close" class="btn ghost" type="button">取消</button>
+    <button id="save-settings" class="btn primary" type="button">保存并刷新</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script>
+/**
+ * core.js —— 纯逻辑层（不碰 DOM、不碰网络）
+ * 浏览器里挂到 window.GSRCore；Node 里挂到 globalThis.GSRCore，方便自测。
+ */
+(function (root) {
+  'use strict';
+
+  /* ------------------------------ 榜单维度 ------------------------------ */
+
+  // windowDays = null 表示不限时间；否则只统计「最近 N 天新建」的仓库
+  var BOARDS = [
+    {
+      id: 'all',
+      name: '总榜',
+      short: '历史累计',
+      desc: '有史以来星标最多的仓库（不限创建时间）',
+      windowDays: null,
+      minStars: 1000,
+      pages: 3,
+    },
+    {
+      id: 'year',
+      name: '年榜',
+      short: '近 1 年',
+      desc: '近 1 年内新建、星标最高的仓库',
+      windowDays: 365,
+      minStars: 300,
+      pages: 2,
+    },
+    {
+      id: 'month',
+      name: '月榜',
+      short: '近 30 天',
+      desc: '近 30 天新建、星标最高的仓库',
+      windowDays: 30,
+      minStars: 10,
+      pages: 2,
+    },
+    {
+      id: 'week',
+      name: '周榜',
+      short: '近 7 天',
+      desc: '近 7 天新建、星标最高的仓库',
+      windowDays: 7,
+      minStars: 3,
+      pages: 2,
+    },
+  ];
+
+  function getBoard(id) {
+    for (var i = 0; i < BOARDS.length; i++) if (BOARDS[i].id === id) return BOARDS[i];
+    return BOARDS[0];
+  }
+
+  /* ------------------------------ 项目分类 ------------------------------ */
+
+  var CATEGORIES = [
+    { id: 'all', name: '全部', icon: '✦' },
+    { id: 'ai', name: 'AI / 大模型', icon: '🤖' },
+    { id: 'frontend', name: '前端', icon: '🎨' },
+    { id: 'backend', name: '后端 / 服务端', icon: '🧱' },
+    { id: 'data', name: '数据 / 数据库', icon: '🗄️' },
+    { id: 'devops', name: '云原生 / 运维', icon: '☁️' },
+    { id: 'mobile', name: '移动端', icon: '📱' },
+    { id: 'tools', name: '开发工具', icon: '🛠️' },
+    { id: 'learn', name: '学习资源', icon: '📚' },
+    { id: 'system', name: '系统 / 底层', icon: '⚙️' },
+    { id: 'security', name: '安全', icon: '🔐' },
+    { id: 'other', name: '其他', icon: '📦' },
+  ];
+
+  function getCategory(id) {
+    for (var i = 0; i < CATEGORIES.length; i++) if (CATEGORIES[i].id === id) return CATEGORIES[i];
+    return CATEGORIES[CATEGORIES.length - 1];
+  }
+
+  // 按优先级从前到后匹配；先命中先归类
+  var RULES = [
+    {
+      cat: 'learn',
+      scope: 'name',
+      words: [
+        'awesome', 'awesomes', 'awesome lists', 'roadmap', 'roadmaps', 'developer roadmap',
+        'interview', 'interviews', 'free programming books', 'programming books', 'books',
+        'build your own x', 'coding interview university', 'system design primer',
+        'tutorial', 'tutorials', 'cheatsheet', 'cheatsheets', 'cs notes', 'weekly',
+        'public apis', 'education', 'learn to code', 'curated list', 'list of',
+      ],
+    },
+    {
+      cat: 'ai',
+      scope: 'any',
+      words: [
+        'ai', 'llm', 'llms', 'gpt', 'chatgpt', 'machine learning', 'deep learning',
+        'transformer', 'transformers', 'diffusion', 'stable diffusion', 'neural',
+        'neural network', 'agent', 'agents', 'rag', 'embedding', 'embeddings',
+        'langchain', 'pytorch', 'tensorflow', 'huggingface', 'ollama', 'mcp',
+        'prompt', 'inference', 'whisper', 'nlp', 'computer vision', 'comfyui',
+        'autogpt', 'copilot', 'reasoning', 'moe', 'quantization', 'speech recognition',
+        'openai', 'chatbot', 'text generation', 'fine tuning', 'model context protocol',
+        'artificial intelligence',
+      ],
+    },
+    {
+      cat: 'security',
+      scope: 'any',
+      words: [
+        'security', 'hacking', 'pentest', 'penetration testing', 'vulnerability',
+        'exploit', 'malware', 'ctf', 'reverse engineering', 'firewall', 'vpn',
+        'password manager', 'zero trust', 'threat intel', 'forensics',
+      ],
+    },
+    {
+      cat: 'devops',
+      scope: 'any',
+      words: [
+        'kubernetes', 'k8s', 'docker', 'devops', 'terraform', 'ansible', 'ci cd',
+        'continuous integration', 'nginx', 'prometheus', 'grafana', 'observability',
+        'cloud native', 'helm', 'argocd', 'serverless', 'infrastructure',
+        'monitoring', 'containers', 'orchestration', 'deployment', 'ops',
+      ],
+    },
+    {
+      cat: 'mobile',
+      scope: 'any',
+      words: [
+        'android', 'ios', 'swift', 'kotlin', 'flutter', 'react native', 'mobile',
+        'jetpack compose', 'xamarin', 'app store', 'android app', 'ios app',
+      ],
+    },
+    {
+      cat: 'frontend',
+      scope: 'any',
+      words: [
+        'react', 'vue', 'svelte', 'angular', 'next js', 'nuxt', 'tailwind', 'css',
+        'frontend', 'front end', 'web components', 'three js', 'webgl', 'vite',
+        'webpack', 'astro', 'shadcn', 'design system', 'component library',
+        'ui components', 'dom', 'html5', 'typescript', 'javascript', 'jquery',
+      ],
+    },
+    {
+      cat: 'backend',
+      scope: 'any',
+      words: [
+        'backend', 'back end', 'server', 'api', 'microservice', 'microservices',
+        'framework', 'http', 'rest', 'graphql', 'grpc', 'spring', 'django',
+        'flask', 'express', 'laravel', 'rails', 'fastapi', 'koa', 'nestjs',
+        'golang', 'node', 'nodejs', 'deno', 'bun', 'php', 'java', 'supabase',
+        'runtime', 'authentication', 'websocket', 'message queue',
+      ],
+    },
+    {
+      cat: 'data',
+      scope: 'any',
+      words: [
+        'database', 'databases', 'sql', 'redis', 'postgres', 'postgresql', 'mysql',
+        'mongodb', 'kafka', 'clickhouse', 'elasticsearch', 'etl', 'data warehouse',
+        'dataframe', 'pandas', 'analytics', 'streaming', 'olap', 'vector database',
+        'streamlit', 'jupyter', 'data science', 'data analysis', 'search engine',
+        'full text search', 'nosql', 'timeseries', 'time series', 'messaging',
+      ],
+    },
+    {
+      cat: 'tools',
+      scope: 'any',
+      words: [
+        'cli', 'terminal', 'editor', 'vscode', 'neovim', 'vim', 'productivity',
+        'dotfiles', 'shell', 'zsh', 'git', 'package manager', 'build tool',
+        'launcher', 'desktop app', 'remote desktop', 'file transfer', 'workflow',
+        'automation', 'utilities', 'powershell', 'notes', 'screenshot',
+        'clipboard', 'testing', 'e2e', 'api testing', 'docs', 'markdown',
+      ],
+    },
+    {
+      cat: 'system',
+      scope: 'any',
+      words: [
+        'kernel', 'operating system', 'compiler', 'embedded', 'firmware', 'wasm',
+        'webassembly', 'assembly', 'low level', 'drivers', 'virtual machine',
+        'browser engine', 'rust', 'systems programming', 'linux kernel', 'bootloader',
+      ],
+    },
+  ];
+
+  function normalizeText(s) {
+    return (' ' + String(s || '').toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim() + ' ');
+  }
+
+  function hit(scopeText, words) {
+    for (var i = 0; i < words.length; i++) {
+      if (scopeText.indexOf(' ' + words[i] + ' ') !== -1) return true;
+    }
+    return false;
+  }
+
+  function classify(repo) {
+    for (var i = 0; i < CATEGORIES.length; i++) {
+      if (CATEGORIES[i].id === repo.category) return repo.category;
+    }
+    var nameText = normalizeText(
+      [repo.name, repo.fullName, (repo.topics || []).join(' ')].join(' ')
+    );
+    var anyText = normalizeText(
+      [repo.name, repo.fullName, (repo.topics || []).join(' '), repo.description, repo.descZh].join(' ')
+    );
+    for (var r = 0; r < RULES.length; r++) {
+      var rule = RULES[r];
+      var text = rule.scope === 'name' ? nameText : anyText;
+      if (hit(text, rule.words)) return rule.cat;
+    }
+    return 'other';
+  }
+
+  /* ------------------------------ 数据归一化 ------------------------------ */
+
+  var WEB_REPO_RE = /^https:\/\/(?:www\.)?github\.com\/[^\/]+\/[^\/?#]+/;
+
+  /**
+   * 只认 GitHub 网页地址。
+   * 注意：Search API 返回的 url 字段是 API 地址（api.github.com/repos/…），
+   * 点开是一屏 JSON，绝不能用它当仓库链接；网页地址在 html_url 里。
+   */
+  function webUrl(fullName, raw) {
+    var candidates = [raw.html_url, raw.url, raw.web_url];
+    for (var i = 0; i < candidates.length; i++) {
+      if (typeof candidates[i] === 'string' && WEB_REPO_RE.test(candidates[i])) {
+        return candidates[i].split('?')[0].split('#')[0].replace(/\/+$/, '');
+      }
+    }
+    return fullName ? 'https://github.com/' + fullName : '';
+  }
+
+  function toRepo(raw, boardId) {
+    var fullName = raw.full_name || raw.fullName || raw.n || '';
+    var created = raw.created_at || raw.created || null;
+    var pushed = raw.pushed_at || raw.pushed || null;
+    var repo = {
+      fullName: fullName,
+      name: fullName.split('/').pop() || fullName,
+      owner: fullName.split('/')[0] || '',
+      url: webUrl(fullName, raw),
+      stars: Number(raw.stargazers_count != null ? raw.stargazers_count : raw.s) || 0,
+      forks: Number(raw.forks_count != null ? raw.forks_count : raw.f) || 0,
+      language: raw.language || raw.l || '',
+      topics: (raw.topics || raw.t || []).slice(0, 8),
+      descZh: raw.descZh || raw.zh || raw.d || '',
+      descOriginal: raw.description || raw.desc || '',
+      createdAt: created,
+      pushedAt: pushed,
+      category: raw.category || raw.c || '',
+      board: boardId || raw.board || 'all',
+      approx: !!raw.approx,
+      source: raw.source || 'live',
+      translated: false,
+    };
+    repo.category = classify(repo);
+    if (!repo.descZh) repo.descZh = '';
+    return repo;
+  }
+
+  /* ------------------------------ 查询构造 ------------------------------ */
+
+  function isoDate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  /**
+   * 生成 GitHub Search API 的查询参数
+   * @returns {{q:string, sort:string, order:string, per_page:number, page:number}}
+   */
+  function buildQuery(boardId, page, now) {
+    var board = getBoard(boardId);
+    var today = now ? new Date(now) : new Date();
+    var q;
+    if (board.windowDays) {
+      var from = new Date(today.getTime() - board.windowDays * 86400000);
+      q = 'created:>=' + isoDate(from) + ' stars:>=' + board.minStars;
+    } else {
+      q = 'stars:>=' + board.minStars;
+    }
+    return {
+      q: q,
+      sort: 'stars',
+      order: 'desc',
+      per_page: 100,
+      page: Math.max(1, page || 1),
+    };
+  }
+
+  function buildSearchPath(boardId, page, now) {
+    var p = buildQuery(boardId, page, now);
+    return '/search/repositories?q=' + encodeURIComponent(p.q) +
+      '&sort=' + p.sort + '&order=' + p.order +
+      '&per_page=' + p.per_page + '&page=' + p.page;
+  }
+
+  /* ------------------------------ 筛选与排序 ------------------------------ */
+
+  var SORTS = [
+    { id: 'stars', name: '星标数（多→少）' },
+    { id: 'updated', name: '最近更新' },
+    { id: 'name', name: '名称（A→Z）' },
+  ];
+
+  function matchQuery(repo, q) {
+    if (!q) return true;
+    var needle = q.toLowerCase();
+    var hay = [
+      repo.fullName, repo.descZh, repo.descOriginal, repo.language,
+      (repo.topics || []).join(' '), repo.category,
+    ].join(' ').toLowerCase();
+    return hay.indexOf(needle) !== -1;
+  }
+
+  function filterRepos(list, opts) {
+    opts = opts || {};
+    var category = opts.category && opts.category !== 'all' ? opts.category : null;
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var repo = list[i];
+      if (category && repo.category !== category) continue;
+      if (!matchQuery(repo, (opts.query || '').trim())) continue;
+      out.push(repo);
+    }
+    return sortRepos(out, opts.sort);
+  }
+
+  function sortRepos(list, sort) {
+    var arr = list.slice();
+    if (sort === 'name') {
+      arr.sort(function (a, b) { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()); });
+    } else if (sort === 'updated') {
+      arr.sort(function (a, b) {
+        var ta = a.pushedAt ? Date.parse(a.pushedAt) : 0;
+        var tb = b.pushedAt ? Date.parse(b.pushedAt) : 0;
+        if (tb !== ta) return tb - ta;
+        return b.stars - a.stars;
+      });
+    } else {
+      arr.sort(function (a, b) {
+        if (b.stars !== a.stars) return b.stars - a.stars;
+        return a.fullName.localeCompare(b.fullName);
+      });
+    }
+    return arr;
+  }
+
+  /* ------------------------------ 展示格式化 ------------------------------ */
+
+  function formatStars(n) {
+    n = Number(n) || 0;
+    if (n >= 10000) {
+      var w = n / 10000;
+      return (w >= 100 ? Math.round(w) : Math.round(w * 10) / 10) + ' 万';
+    }
+    if (n >= 1000) return String(Math.round(n / 100) / 10) + 'k';
+    return String(n);
+  }
+
+  function formatFull(n) {
+    return (Number(n) || 0).toLocaleString('en-US');
+  }
+
+  function formatRelative(iso, now) {
+    if (!iso) return '';
+    var t = Date.parse(iso);
+    if (isNaN(t)) return '';
+    var diff = (now ? new Date(now).getTime() : Date.now()) - t;
+    if (diff < 0) return '刚刚';
+    var min = Math.floor(diff / 60000);
+    if (min < 1) return '刚刚';
+    if (min < 60) return min + ' 分钟前';
+    var hr = Math.floor(min / 60);
+    if (hr < 24) return hr + ' 小时前';
+    var day = Math.floor(hr / 24);
+    if (day < 30) return day + ' 天前';
+    var mon = Math.floor(day / 30);
+    if (mon < 12) return mon + ' 个月前';
+    return Math.floor(mon / 12) + ' 年前';
+  }
+
+  // GitHub 常用语言配色
+  var LANG_COLORS = {
+    JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5', Go: '#00ADD8',
+    Rust: '#dea584', Java: '#b07219', C: '#555555', 'C++': '#f34b7d', 'C#': '#178600',
+    PHP: '#4F5D95', Ruby: '#701516', Swift: '#F05138', Kotlin: '#A97BFF',
+    Dart: '#00B4AB', Shell: '#89e051', HTML: '#e34c26', CSS: '#563d7c',
+    Vue: '#41b883', Svelte: '#ff3e00', Lua: '#000080', Zig: '#ec915c',
+    'Jupyter Notebook': '#DA5B0B', Dockerfile: '#384d54',
+  };
+
+  function langColor(lang) {
+    return LANG_COLORS[lang] || '#8b949e';
+  }
+
+  /* ------------------------------ 中文简介字典 ------------------------------ */
+
+  // 常见项目的人工中文简介（命中就不用机器翻译）
+  var ZH_DICT = {
+    'freeCodeCamp/freeCodeCamp': '免费学编程的公益项目，课程覆盖前端、后端到数据科学。',
+    'codecrafters-io/build-your-own-x': '从零手写 Docker、Git、Redis 等经典技术，最扎实的进阶方式。',
+    'sindresorhus/awesome': '各种「Awesome 清单」的总入口，找资源先来这里。',
+    'public-apis/public-apis': '免费公开 API 合集，做练手项目必备。',
+    'kamranahmedse/developer-roadmap': '前端、后端、DevOps 的学习路线图，规划路径的好帮手。',
+    'EbookFoundation/free-programming-books': '多语言免费编程书籍与课程索引。',
+    'donnemartin/system-design-primer': '系统设计入门与面试题，大厂面试常备。',
+    'vinta/awesome-python': 'Python 生态资源大全：库、框架、工具一网打尽。',
+    'jwasham/coding-interview-university': '从零准备软件工程师面试的完整学习计划。',
+    '996icu/996.ICU': '「工作 996，生病 ICU」——程序员加班文化的社会议题仓库。',
+    'tensorflow/tensorflow': 'Google 的深度学习框架，工业界部署生态最完整。',
+    'pytorch/pytorch': '研究者首选的深度学习框架，动态图易调试、GPU 支持好。',
+    'huggingface/transformers': '预训练模型统一接口，几行代码调用主流大模型。',
+    'langchain-ai/langchain': '构建大模型应用的框架：链式编排、工具调用、RAG 都支持。',
+    'ollama/ollama': '一行命令在本机跑 Llama、Qwen 等开源大模型。',
+    'open-webui/open-webui': '自托管的类 ChatGPT 界面，可接 Ollama 与 OpenAI 兼容接口。',
+    'ggml-org/llama.cpp': '纯 C/C++ 的推理引擎，CPU 也能跑量化大模型。',
+    'ggerganov/llama.cpp': '纯 C/C++ 的推理引擎，CPU 也能跑量化大模型。',
+    'AUTOMATIC1111/stable-diffusion-webui': '最流行的 Stable Diffusion 网页界面，插件生态丰富。',
+    'comfyanonymous/ComfyUI': '节点式 AI 绘图工作流，可控性远超普通界面。',
+    'Significant-Gravitas/AutoGPT': '最早走红的自主 AI 智能体实验项目。',
+    'openai/whisper': 'OpenAI 开源语音识别模型，多语言转写效果好。',
+    'deepseek-ai/DeepSeek-R1': 'DeepSeek 开源推理模型，用强化学习练出长链思考能力。',
+    'deepseek-ai/DeepSeek-V3': '671B 参数 MoE 大模型，开源权重、性价比极高。',
+    'browser-use/browser-use': '让 AI 直接操作浏览器完成网页任务。',
+    'modelcontextprotocol/servers': 'MCP 官方服务器合集，为 AI 接入文件、数据库等外部能力。',
+    'All-Hands-AI/OpenHands': '开源 AI 软件工程师，在沙箱里自动写代码、跑测试。',
+    'cline/cline': 'VS Code 里的自主编程智能体，能读写文件、执行命令。',
+    'facebook/react': '声明式 UI 库，现代前端组件化的起点。',
+    'vuejs/vue': '渐进式前端框架，上手快、中文文档友好。',
+    'vercel/next.js': 'React 全栈框架，服务端渲染与文件路由开箱即用。',
+    'twbs/bootstrap': '老牌响应式 UI 框架，快速搭原型最稳的选择。',
+    'tailwindlabs/tailwindcss': '原子化 CSS 框架，样式直接写在 class 里。',
+    'mrdoob/three.js': '浏览器 3D 渲染的标配库。',
+    'vitejs/vite': '极快的现代前端构建工具，冷启动几乎无等待。',
+    'shadcn-ui/ui': '复制即用的 React 组件集合，基于 Tailwind 与 Radix。',
+    'storybookjs/storybook': '组件开发与文档工作台，隔离调试 UI。',
+    'axios/axios': '浏览器与 Node 通用的 HTTP 请求库。',
+    'microsoft/TypeScript': '给 JavaScript 加上静态类型。',
+    'nodejs/node': '服务端 JavaScript 运行时。',
+    'golang/go': 'Go 语言官方仓库，云原生时代的主力语言。',
+    'fastapi/fastapi': '高性能 Python Web 框架，自动生成 OpenAPI 文档。',
+    'django/django': '自带后台管理与 ORM 的 Python 全栈框架。',
+    'spring-projects/spring-boot': 'Java 微服务的事实标准。',
+    'laravel/laravel': 'PHP 生态里最优雅的全栈框架。',
+    'rails/rails': '约定优于配置的 Ruby Web 框架。',
+    'expressjs/express': 'Node 生态最经典的极简 Web 框架。',
+    'supabase/supabase': '开源版 Firebase：Postgres + 鉴权 + 存储 + 实时订阅。',
+    'denoland/deno': '默认安全的 JS/TS 运行时，内置格式化、测试等工具。',
+    'oven-sh/bun': '集运行时、打包、测试于一体的超快 JS 工具链。',
+    'appwrite/appwrite': '可自托管的后端即服务平台。',
+    'redis/redis': '内存键值数据库，缓存与队列的常用选择。',
+    'postgres/postgres': '功能最全的开源关系型数据库。',
+    'mongodb/mongo': '文档型 NoSQL 数据库。',
+    'elastic/elasticsearch': '分布式搜索与分析引擎。',
+    'apache/kafka': '分布式消息与流处理平台。',
+    'clickhouse/clickhouse': '列式分析数据库，亿级日志查询也能毫秒返回。',
+    'streamlit/streamlit': '几行 Python 就能把数据脚本变成网页应用。',
+    'pandas-dev/pandas': 'Python 数据分析的事实标准。',
+    'kubernetes/kubernetes': '容器编排的事实标准。',
+    'moby/moby': 'Docker 引擎的开源上游项目。',
+    'ansible/ansible': '无 Agent 的配置管理与自动化部署。',
+    'grafana/grafana': '可观测性看板，接 Prometheus 等数据源。',
+    'prometheus/prometheus': '云原生监控与告警系统。',
+    'netdata/netdata': '开箱即用的实时系统监控。',
+    'hashicorp/terraform': '基础设施即代码，多云资源统一声明。',
+    'flutter/flutter': 'Google 的跨平台 UI 框架，一套代码跑六端。',
+    'facebook/react-native': '用 React 写原生移动应用。',
+    'rustdesk/rustdesk': '开源自托管远程桌面，TeamViewer 的替代品。',
+    'microsoft/vscode': '最流行的开源代码编辑器。',
+    'ohmyzsh/ohmyzsh': 'Zsh 配置框架，终端颜值与效率一起提升。',
+    'neovim/neovim': '现代化的 Vim，Lua 配置、内置 LSP。',
+    'microsoft/terminal': 'Windows 现代终端，支持标签页与多 Shell。',
+    'microsoft/PowerToys': 'Windows 效率工具集：窗口管理、批量重命名、取色等。',
+    'puppeteer/puppeteer': 'Node 驱动 Chrome 的自动化工具。',
+    'microsoft/playwright': '跨浏览器端到端测试框架。',
+    'hoppscotch/hoppscotch': '开源的 Postman 替代品，在线调试 API。',
+    'n8n-io/n8n': '可自托管的可视化工作流自动化工具。',
+    'electron/electron': '用 Web 技术写跨平台桌面应用。',
+    'localsend/localsend': '局域网跨设备传文件，开源的 AirDrop 替代。',
+    'dani-garcia/vaultwarden': '轻量自托管密码管理器，兼容 Bitwarden 客户端。',
+    'torvalds/linux': 'Linux 内核源码。',
+    'rust-lang/rust': '兼顾安全与性能的系统级语言。',
+    'home-assistant/core': '开源智能家居中枢，接入上千种设备。',
+    'ruanyf/weekly': '科技爱好者周刊，每周分享技术资讯与工具。',
+    'yt-dlp/yt-dlp': '功能强大的命令行视频下载工具，支持上千站点。',
+    'nvm-sh/nvm': 'Node 版本管理工具。',
+    'junegunn/fzf': '命令行模糊搜索，文件与历史命令都能秒找。',
+    'BurntSushi/ripgrep': '超快的文本搜索工具，grep 的现代替代。',
+    'jesseduffield/lazygit': '终端里的 Git 图形界面，提交与变基都变简单。',
+    'tauri-apps/tauri': '用 Rust + Web 技术构建体积更小的桌面应用。',
+  };
+
+  function lookupZh(fullName) {
+    if (!fullName) return '';
+    if (ZH_DICT[fullName]) return ZH_DICT[fullName];
+    var lower = fullName.toLowerCase();
+    var keys = Object.keys(ZH_DICT);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].toLowerCase() === lower) return ZH_DICT[keys[i]];
+    }
+    return '';
+  }
+
+  /* ------------------------------ 导出 ------------------------------ */
+
+  var api = {
+    BOARDS: BOARDS,
+    CATEGORIES: CATEGORIES,
+    SORTS: SORTS,
+    ZH_DICT: ZH_DICT,
+    getBoard: getBoard,
+    getCategory: getCategory,
+    classify: classify,
+    toRepo: toRepo,
+    webUrl: webUrl,
+    buildQuery: buildQuery,
+    buildSearchPath: buildSearchPath,
+    filterRepos: filterRepos,
+    sortRepos: sortRepos,
+    formatStars: formatStars,
+    formatFull: formatFull,
+    formatRelative: formatRelative,
+    langColor: langColor,
+    lookupZh: lookupZh,
+    normalizeText: normalizeText,
+  };
+
+  root.GSRCore = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/**
+ * snapshot.js —— 内置离线快照（联网失败时兜底）
+ *
+ * 说明：星标数是整理时的近似值（页面会用「≈」标出），只用于断网时也能把界面跑起来。
+ * 想更新这份数据：联网状态下点页面上的「更新」即可，不需要改这个文件。
+ * 字段：n=仓库全名  s=星标  f=分叉  l=语言  t=话题  d=中文简介  c=分类
+ */
+window.GSR_SNAPSHOT = {
+  updated: '2026-10-24',
+  note: '内置离线快照，星标为整理时的近似值',
+  repos: [
+    /* ---------- 学习资源 ---------- */
+    { n: 'freeCodeCamp/freeCodeCamp', s: 408000, f: 39200, l: 'TypeScript', t: ['education', 'learn-to-code', 'nonprofit'], c: 'learn', d: '免费学编程的公益项目，课程覆盖前端、后端到数据科学。' },
+    { n: 'EbookFoundation/free-programming-books', s: 345000, f: 62000, l: '', t: ['books', 'education', 'list'], c: 'learn', d: '多语言免费编程书籍与课程索引。' },
+    { n: 'sindresorhus/awesome', s: 340000, f: 27800, l: '', t: ['awesome', 'lists', 'resources'], c: 'learn', d: '各种「Awesome 清单」的总入口，找资源先来这里。' },
+    { n: 'public-apis/public-apis', s: 330000, f: 35800, l: 'Python', t: ['api', 'public-apis', 'free'], c: 'learn', d: '免费公开 API 合集，做练手项目必备。' },
+    { n: 'codecrafters-io/build-your-own-x', s: 320000, f: 29800, l: 'Markdown', t: ['tutorial', 'programming', 'learning'], c: 'learn', d: '从零手写 Docker、Git、Redis 等经典技术，最扎实的进阶方式。' },
+    { n: 'jwasham/coding-interview-university', s: 315000, f: 76000, l: '', t: ['interview', 'computer-science', 'study-plan'], c: 'learn', d: '从零准备软件工程师面试的完整学习计划。' },
+    { n: 'kamranahmedse/developer-roadmap', s: 300000, f: 39400, l: 'TypeScript', t: ['roadmap', 'learning', 'career'], c: 'learn', d: '前端、后端、DevOps 的学习路线图，规划路径的好帮手。' },
+    { n: 'donnemartin/system-design-primer', s: 285000, f: 46800, l: 'Python', t: ['system-design', 'interview', 'architecture'], c: 'learn', d: '系统设计入门与面试题，大厂面试常备。' },
+    { n: '996icu/996.ICU', s: 270000, f: 21500, l: '', t: ['work-life-balance', '996'], c: 'learn', d: '「工作 996，生病 ICU」——程序员加班文化的社会议题仓库。' },
+    { n: 'vinta/awesome-python', s: 235000, f: 25700, l: 'Python', t: ['python', 'awesome', 'resources'], c: 'learn', d: 'Python 生态资源大全：库、框架、工具一网打尽。' },
+    { n: 'ruanyf/weekly', s: 70000, f: 2900, l: '', t: ['weekly', 'newsletter', 'tech'], c: 'learn', d: '科技爱好者周刊，每周分享技术资讯与工具。' },
+
+    /* ---------- AI / 大模型 ---------- */
+    { n: 'tensorflow/tensorflow', s: 190000, f: 74600, l: 'C++', t: ['machine-learning', 'deep-learning', 'neural-network'], c: 'ai', d: 'Google 的深度学习框架，工业界部署生态最完整。' },
+    { n: 'Significant-Gravitas/AutoGPT', s: 170000, f: 44200, l: 'Python', t: ['agent', 'automation', 'gpt'], c: 'ai', d: '最早走红的自主 AI 智能体实验项目。' },
+    { n: 'AUTOMATIC1111/stable-diffusion-webui', s: 145000, f: 27000, l: 'Python', t: ['stable-diffusion', 'image-generation'], c: 'ai', d: '最流行的 Stable Diffusion 网页界面，插件生态丰富。' },
+    { n: 'huggingface/transformers', s: 145000, f: 29100, l: 'Python', t: ['nlp', 'llm', 'pretrained-models'], c: 'ai', d: '预训练模型统一接口，几行代码调用主流大模型。' },
+    { n: 'ollama/ollama', s: 105000, f: 8400, l: 'Go', t: ['llm', 'local', 'inference'], c: 'ai', d: '一行命令在本机跑 Llama、Qwen 等开源大模型。' },
+    { n: 'langchain-ai/langchain', s: 100000, f: 16200, l: 'Python', t: ['llm', 'agent', 'rag'], c: 'ai', d: '构建大模型应用的框架：链式编排、工具调用、RAG 都支持。' },
+    { n: 'deepseek-ai/DeepSeek-V3', s: 95000, f: 12400, l: 'Python', t: ['llm', 'moe', 'llm-inference'], c: 'ai', d: '671B 参数 MoE 大模型，开源权重、性价比极高。' },
+    { n: 'deepseek-ai/DeepSeek-R1', s: 90000, f: 11800, l: 'Python', t: ['llm', 'reasoning', 'reinforcement-learning'], c: 'ai', d: 'DeepSeek 开源推理模型，用强化学习练出长链思考能力。' },
+    { n: 'pytorch/pytorch', s: 88000, f: 23700, l: 'Python', t: ['deep-learning', 'gpu', 'tensor'], c: 'ai', d: '研究者首选的深度学习框架，动态图易调试、GPU 支持好。' },
+    { n: 'openai/whisper', s: 80000, f: 9800, l: 'Python', t: ['speech-recognition', 'transcription', 'multilingual'], c: 'ai', d: 'OpenAI 开源语音识别模型，多语言转写效果好。' },
+    { n: 'ggerganov/llama.cpp', s: 72000, f: 10300, l: 'C++', t: ['llm', 'inference', 'quantization'], c: 'ai', d: '纯 C/C++ 的推理引擎，CPU 也能跑量化大模型。' },
+    { n: 'comfyanonymous/ComfyUI', s: 68000, f: 7400, l: 'Python', t: ['stable-diffusion', 'workflow', 'image-generation'], c: 'ai', d: '节点式 AI 绘图工作流，可控性远超普通界面。' },
+    { n: 'open-webui/open-webui', s: 65000, f: 7600, l: 'JavaScript', t: ['llm', 'chat', 'self-hosted'], c: 'ai', d: '自托管的类 ChatGPT 界面，可接 Ollama 与 OpenAI 兼容接口。' },
+    { n: 'browser-use/browser-use', s: 65000, f: 7300, l: 'Python', t: ['agent', 'browser-automation', 'llm'], c: 'ai', d: '让 AI 直接操作浏览器完成网页任务。' },
+    { n: 'All-Hands-AI/OpenHands', s: 60000, f: 7100, l: 'Python', t: ['agent', 'coding', 'sandbox'], c: 'ai', d: '开源 AI 软件工程师，在沙箱里自动写代码、跑测试。' },
+    { n: 'modelcontextprotocol/servers', s: 60000, f: 5800, l: 'TypeScript', t: ['mcp', 'llm', 'tools'], c: 'ai', d: 'MCP 官方服务器合集，为 AI 接入文件、数据库等外部能力。' },
+    { n: 'cline/cline', s: 50000, f: 4800, l: 'TypeScript', t: ['agent', 'vscode', 'coding'], c: 'ai', d: 'VS Code 里的自主编程智能体，能读写文件、执行命令。' },
+
+    /* ---------- 前端 ---------- */
+    { n: 'facebook/react', s: 235000, f: 48000, l: 'JavaScript', t: ['react', 'ui', 'frontend'], c: 'frontend', d: '声明式 UI 库，现代前端组件化的起点。' },
+    { n: 'vuejs/vue', s: 210000, f: 33500, l: 'TypeScript', t: ['vue', 'frontend', 'framework'], c: 'frontend', d: '渐进式前端框架，上手快、中文文档友好。' },
+    { n: 'twbs/bootstrap', s: 172000, f: 78800, l: 'JavaScript', t: ['css', 'responsive', 'ui'], c: 'frontend', d: '老牌响应式 UI 框架，快速搭原型最稳的选择。' },
+    { n: 'vercel/next.js', s: 130000, f: 27800, l: 'JavaScript', t: ['react', 'ssr', 'framework'], c: 'frontend', d: 'React 全栈框架，服务端渲染与文件路由开箱即用。' },
+    { n: 'axios/axios', s: 108000, f: 11200, l: 'JavaScript', t: ['http', 'promise', 'xhr'], c: 'frontend', d: '浏览器与 Node 通用的 HTTP 请求库。' },
+    { n: 'mrdoob/three.js', s: 105000, f: 35700, l: 'JavaScript', t: ['webgl', '3d', 'graphics'], c: 'frontend', d: '浏览器 3D 渲染的标配库。' },
+    { n: 'microsoft/TypeScript', s: 105000, f: 12900, l: 'TypeScript', t: ['typescript', 'language', 'compiler'], c: 'frontend', d: '给 JavaScript 加上静态类型。' },
+    { n: 'tailwindlabs/tailwindcss', s: 85000, f: 4400, l: 'TypeScript', t: ['css', 'utility-first', 'design'], c: 'frontend', d: '原子化 CSS 框架，样式直接写在 class 里。' },
+    { n: 'storybookjs/storybook', s: 85000, f: 9300, l: 'TypeScript', t: ['ui', 'components', 'testing'], c: 'frontend', d: '组件开发与文档工作台，隔离调试 UI。' },
+    { n: 'shadcn-ui/ui', s: 80000, f: 4600, l: 'TypeScript', t: ['react', 'components', 'tailwindcss'], c: 'frontend', d: '复制即用的 React 组件集合，基于 Tailwind 与 Radix。' },
+    { n: 'vitejs/vite', s: 72000, f: 6500, l: 'TypeScript', t: ['build-tool', 'frontend', 'esm'], c: 'frontend', d: '极快的现代前端构建工具，冷启动几乎无等待。' },
+
+    /* ---------- 后端 / 服务端 ---------- */
+    { n: 'golang/go', s: 125000, f: 17800, l: 'Go', t: ['golang', 'language', 'backend'], c: 'backend', d: 'Go 语言官方仓库，云原生时代的主力语言。' },
+    { n: 'nodejs/node', s: 110000, f: 31200, l: 'JavaScript', t: ['runtime', 'nodejs', 'javascript'], c: 'backend', d: '服务端 JavaScript 运行时。' },
+    { n: 'denoland/deno', s: 98000, f: 5400, l: 'Rust', t: ['runtime', 'typescript', 'javascript'], c: 'backend', d: '默认安全的 JS/TS 运行时，内置格式化、测试等工具。' },
+    { n: 'supabase/supabase', s: 80000, f: 8200, l: 'TypeScript', t: ['postgres', 'baas', 'realtime'], c: 'backend', d: '开源版 Firebase：Postgres + 鉴权 + 存储 + 实时订阅。' },
+    { n: 'fastapi/fastapi', s: 82000, f: 7100, l: 'Python', t: ['python', 'api', 'openapi'], c: 'backend', d: '高性能 Python Web 框架，自动生成 OpenAPI 文档。' },
+    { n: 'django/django', s: 82000, f: 32000, l: 'Python', t: ['python', 'framework', 'orm'], c: 'backend', d: '自带后台管理与 ORM 的 Python 全栈框架。' },
+    { n: 'laravel/laravel', s: 80000, f: 24200, l: 'PHP', t: ['php', 'framework', 'mvc'], c: 'backend', d: 'PHP 生态里最优雅的全栈框架。' },
+    { n: 'oven-sh/bun', s: 78000, f: 3100, l: 'Zig', t: ['javascript', 'runtime', 'bundler'], c: 'backend', d: '集运行时、打包、测试于一体的超快 JS 工具链。' },
+    { n: 'spring-projects/spring-boot', s: 78000, f: 40700, l: 'Java', t: ['java', 'spring', 'microservices'], c: 'backend', d: 'Java 微服务的事实标准。' },
+    { n: 'expressjs/express', s: 66000, f: 16900, l: 'JavaScript', t: ['nodejs', 'http', 'framework'], c: 'backend', d: 'Node 生态最经典的极简 Web 框架。' },
+    { n: 'rails/rails', s: 56000, f: 21800, l: 'Ruby', t: ['ruby', 'framework', 'mvc'], c: 'backend', d: '约定优于配置的 Ruby Web 框架。' },
+    { n: 'appwrite/appwrite', s: 50000, f: 4500, l: 'TypeScript', t: ['baas', 'backend', 'self-hosted'], c: 'backend', d: '可自托管的后端即服务平台。' },
+
+    /* ---------- 数据 / 数据库 ---------- */
+    { n: 'elastic/elasticsearch', s: 71000, f: 24700, l: 'Java', t: ['search', 'analytics', 'lucene'], c: 'data', d: '分布式搜索与分析引擎。' },
+    { n: 'redis/redis', s: 68000, f: 24000, l: 'C', t: ['database', 'cache', 'nosql'], c: 'data', d: '内存键值数据库，缓存与队列的常用选择。' },
+    { n: 'pandas-dev/pandas', s: 45000, f: 18200, l: 'Python', t: ['data-analysis', 'dataframe', 'python'], c: 'data', d: 'Python 数据分析的事实标准。' },
+    { n: 'clickhouse/clickhouse', s: 38000, f: 6900, l: 'C++', t: ['olap', 'analytics', 'database'], c: 'data', d: '列式分析数据库，亿级日志查询也能毫秒返回。' },
+    { n: 'streamlit/streamlit', s: 38000, f: 3300, l: 'Python', t: ['data', 'dashboard', 'python'], c: 'data', d: '几行 Python 就能把数据脚本变成网页应用。' },
+    { n: 'apache/kafka', s: 29000, f: 14000, l: 'Java', t: ['streaming', 'messaging', 'distributed'], c: 'data', d: '分布式消息与流处理平台。' },
+    { n: 'mongodb/mongo', s: 27000, f: 5600, l: 'C++', t: ['database', 'nosql', 'document'], c: 'data', d: '文档型 NoSQL 数据库。' },
+    { n: 'postgres/postgres', s: 18000, f: 4800, l: 'C', t: ['database', 'sql', 'relational'], c: 'data', d: '功能最全的开源关系型数据库。' },
+
+    /* ---------- 云原生 / 运维 ---------- */
+    { n: 'kubernetes/kubernetes', s: 115000, f: 40500, l: 'Go', t: ['kubernetes', 'containers', 'orchestration'], c: 'devops', d: '容器编排的事实标准。' },
+    { n: 'netdata/netdata', s: 72000, f: 5900, l: 'C', t: ['monitoring', 'observability', 'performance'], c: 'devops', d: '开箱即用的实时系统监控。' },
+    { n: 'moby/moby', s: 70000, f: 18700, l: 'Go', t: ['docker', 'containers', 'engine'], c: 'devops', d: 'Docker 引擎的开源上游项目。' },
+    { n: 'grafana/grafana', s: 66000, f: 12100, l: 'TypeScript', t: ['monitoring', 'dashboard', 'observability'], c: 'devops', d: '可观测性看板，接 Prometheus 等数据源。' },
+    { n: 'ansible/ansible', s: 65000, f: 23800, l: 'Python', t: ['automation', 'configuration-management'], c: 'devops', d: '无 Agent 的配置管理与自动化部署。' },
+    { n: 'prometheus/prometheus', s: 57000, f: 9300, l: 'Go', t: ['monitoring', 'metrics', 'alerting'], c: 'devops', d: '云原生监控与告警系统。' },
+    { n: 'hashicorp/terraform', s: 44000, f: 9800, l: 'Go', t: ['iac', 'infrastructure', 'cloud'], c: 'devops', d: '基础设施即代码，多云资源统一声明。' },
+
+    /* ---------- 移动端 ---------- */
+    { n: 'flutter/flutter', s: 170000, f: 28000, l: 'Dart', t: ['flutter', 'dart', 'cross-platform'], c: 'mobile', d: 'Google 的跨平台 UI 框架，一套代码跑六端。' },
+    { n: 'facebook/react-native', s: 120000, f: 24500, l: 'JavaScript', t: ['react-native', 'mobile', 'ios'], c: 'mobile', d: '用 React 写原生移动应用。' },
+
+    /* ---------- 开发工具 ---------- */
+    { n: 'ohmyzsh/ohmyzsh', s: 178000, f: 26000, l: 'Shell', t: ['shell', 'zsh', 'productivity'], c: 'tools', d: 'Zsh 配置框架，终端颜值与效率一起提升。' },
+    { n: 'microsoft/vscode', s: 170000, f: 31500, l: 'TypeScript', t: ['editor', 'ide', 'typescript'], c: 'tools', d: '最流行的开源代码编辑器。' },
+    { n: 'electron/electron', s: 118000, f: 16000, l: 'C++', t: ['desktop', 'javascript', 'chromium'], c: 'tools', d: '用 Web 技术写跨平台桌面应用。' },
+    { n: 'microsoft/PowerToys', s: 115000, f: 6800, l: 'C#', t: ['windows', 'utilities', 'productivity'], c: 'tools', d: 'Windows 效率工具集：窗口管理、批量重命名、取色等。' },
+    { n: 'microsoft/terminal', s: 97000, f: 8300, l: 'C++', t: ['terminal', 'windows', 'console'], c: 'tools', d: 'Windows 现代终端，支持标签页与多 Shell。' },
+    { n: 'puppeteer/puppeteer', s: 90000, f: 9100, l: 'TypeScript', t: ['automation', 'browser', 'testing'], c: 'tools', d: 'Node 驱动 Chrome 的自动化工具。' },
+    { n: 'n8n-io/n8n', s: 90000, f: 12800, l: 'TypeScript', t: ['automation', 'workflow', 'self-hosted'], c: 'tools', d: '可自托管的可视化工作流自动化工具。' },
+    { n: 'neovim/neovim', s: 85000, f: 5800, l: 'Vim Script', t: ['vim', 'editor', 'lua'], c: 'tools', d: '现代化的 Vim，Lua 配置、内置 LSP。' },
+    { n: 'microsoft/playwright', s: 72000, f: 4200, l: 'TypeScript', t: ['testing', 'e2e', 'browser'], c: 'tools', d: '跨浏览器端到端测试框架。' },
+    { n: 'hoppscotch/hoppscotch', s: 72000, f: 4900, l: 'TypeScript', t: ['api', 'testing', 'rest'], c: 'tools', d: '开源的 Postman 替代品，在线调试 API。' },
+    { n: 'localsend/localsend', s: 68000, f: 3500, l: 'Dart', t: ['file-transfer', 'cross-platform', 'lan'], c: 'tools', d: '局域网跨设备传文件，开源的 AirDrop 替代。' },
+    { n: 'rustdesk/rustdesk', s: 80000, f: 9400, l: 'Rust', t: ['remote-desktop', 'self-hosted', 'rust'], c: 'tools', d: '开源自托管远程桌面，TeamViewer 的替代品。' },
+    { n: 'tauri-apps/tauri', s: 85000, f: 2500, l: 'Rust', t: ['desktop', 'rust', 'webview'], c: 'tools', d: '用 Rust + Web 技术构建体积更小的桌面应用。' },
+    { n: 'junegunn/fzf', s: 65000, f: 2400, l: 'Go', t: ['cli', 'fuzzy-search', 'productivity'], c: 'tools', d: '命令行模糊搜索，文件与历史命令都能秒找。' },
+    { n: 'BurntSushi/ripgrep', s: 50000, f: 2000, l: 'Rust', t: ['cli', 'search', 'grep'], c: 'tools', d: '超快的文本搜索工具，grep 的现代替代。' },
+    { n: 'jesseduffield/lazygit', s: 58000, f: 2000, l: 'Go', t: ['git', 'cli', 'terminal-ui'], c: 'tools', d: '终端里的 Git 图形界面，提交与变基都变简单。' },
+
+    /* ---------- 安全 ---------- */
+    { n: 'dani-garcia/vaultwarden', s: 46000, f: 2200, l: 'Rust', t: ['password-manager', 'bitwarden', 'self-hosted'], c: 'security', d: '轻量自托管密码管理器，兼容 Bitwarden 客户端。' },
+
+    /* ---------- 系统 / 底层 ---------- */
+    { n: 'torvalds/linux', s: 195000, f: 55000, l: 'C', t: ['kernel', 'operating-system', 'linux'], c: 'system', d: 'Linux 内核源码。' },
+    { n: 'rust-lang/rust', s: 102000, f: 13000, l: 'Rust', t: ['rust', 'language', 'compiler'], c: 'system', d: '兼顾安全与性能的系统级语言。' },
+
+    /* ---------- 其他 ---------- */
+    { n: 'home-assistant/core', s: 78000, f: 33000, l: 'Python', t: ['home-automation', 'iot', 'smarthome'], c: 'other', d: '开源智能家居中枢，接入上千种设备。' },
+    { n: 'yt-dlp/yt-dlp', s: 110000, f: 8600, l: 'Python', t: ['youtube-dl', 'cli', 'downloader'], c: 'tools', d: '功能强大的命令行视频下载工具，支持上千站点。' },
+    { n: 'nvm-sh/nvm', s: 82000, f: 8100, l: 'Shell', t: ['node', 'version-manager', 'shell'], c: 'tools', d: 'Node 版本管理工具。' },
+  ],
+};
+
+</script>
+<script>
+/**
+ * app.js —— 界面与数据获取
+ * 依赖：core.js（GSRCore）、snapshot.js（GSR_SNAPSHOT）
+ */
+(function () {
+  'use strict';
+
+  var core = window.GSRCore;
+  var SNAP = window.GSR_SNAPSHOT || { repos: [], updated: '', note: '' };
+
+  var STORE_KEYS = {
+    settings: 'gsr:settings:v1',
+    cache: 'gsr:cache:v2', // v2：旧的 v1 缓存里存着 API 地址，链接是坏的，直接弃用
+    zh: 'gsr:zh:v1',
+    api: 'gsr:api:v1',
+    offline: 'gsr:offline-until:v1',
+  };
+
+  var CACHE_TTL = 10 * 60 * 1000; // 10 分钟内直接用缓存
+
+  /* ------------------------------ 本地存储（失败就退化到内存） ------------------------------ */
+
+  var memoryStore = {};
+  function readJSON(key, fallback) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    if (memoryStore[key] !== undefined) return memoryStore[key];
+    return fallback;
+  }
+  function writeJSON(key, value) {
+    memoryStore[key] = value;
+    try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* ignore */ }
+  }
+
+  /* ------------------------------ 设置 ------------------------------ */
+
+  var DEFAULT_SETTINGS = { token: '', apiBase: '', translate: true, theme: 'auto' };
+  var settings = Object.assign({}, DEFAULT_SETTINGS, readJSON(STORE_KEYS.settings, {}));
+  function saveSettings() { writeJSON(STORE_KEYS.settings, settings); }
+
+  /* ------------------------------ 数据源适配器 ------------------------------ */
+
+  var PROXIED = function (prefix) {
+    return {
+      id: prefix,
+      name: prefix,
+      url: function (path) { return prefix + 'https://api.github.com' + path; },
+      useToken: false,
+    };
+  };
+
+  var ADAPTERS = [
+    {
+      id: 'github', name: 'GitHub 官方 API（推荐）',
+      url: function (path) { return 'https://api.github.com' + path; }, useToken: true,
+    },
+    {
+      id: 'gh-proxy', name: 'gh-proxy 镜像',
+      url: function (path) { return 'https://gh-proxy.com/https://api.github.com' + path; }, useToken: false,
+    },
+    {
+      id: 'kkgithub', name: 'kkgithub 镜像',
+      url: function (path) { return 'https://api.kkgithub.com' + path; }, useToken: false,
+    },
+    {
+      id: 'corsproxy', name: 'corsproxy.io 中转',
+      url: function (path) {
+        return 'https://corsproxy.io/?url=' + encodeURIComponent('https://api.github.com' + path);
+      }, useToken: false,
+    },
+    {
+      id: 'allorigins', name: 'allorigins 中转',
+      url: function (path) {
+        return 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.github.com' + path);
+      }, useToken: false,
+    },
+  ];
+
+  function adapterList() {
+    var list = ADAPTERS.slice();
+    if (settings.apiBase && settings.apiBase.trim()) {
+      var custom = PROXIED(settings.apiBase.trim().replace(/\/+$/, '') + '/');
+      list.unshift(custom);
+    } else {
+      var preferred = readJSON(STORE_KEYS.api, '');
+      if (preferred) {
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id === preferred) {
+            var hit = list.splice(i, 1)[0];
+            list.unshift(hit);
+            break;
+          }
+        }
+      }
+    }
+    return list;
+  }
+
+  /* ------------------------------ 网络请求 ------------------------------ */
+
+  function fetchJSON(url, opts) {
+    opts = opts || {};
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, opts.timeout || 12000);
+    var headers = { 'Accept': 'application/vnd.github+json' };
+    if (opts.token) headers['Authorization'] = 'Bearer ' + opts.token;
+    return fetch(url, { headers: headers, signal: controller.signal })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          if (!res.ok) {
+            var msg = '';
+            try { msg = (JSON.parse(text) || {}).message || ''; } catch (e) { /* ignore */ }
+            var err = new Error('HTTP ' + res.status + (msg ? '：' + msg : ''));
+            err.status = res.status;
+            throw err;
+          }
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            throw new Error('返回内容不是 JSON');
+          }
+        });
+      })
+      .catch(function (err) {
+        if (err.name === 'AbortError') throw new Error('请求超时');
+        throw err;
+      })
+      .finally(function () { clearTimeout(timer); });
+  }
+
+  function describeError(err) {
+    var msg = (err && err.message) || String(err);
+    if (err && err.status === 403) return '接口被限流（403），可到设置里填入 GitHub Token 提升额度';
+    if (err && err.status === 422) return '查询条件被拒绝（422）';
+    if (/Failed to fetch|NetworkError|Load failed|网络|ERR_/i.test(msg)) return '网络不可达';
+    return msg;
+  }
+
+  /* ------------------------------ 状态 ------------------------------ */
+
+  var state = {
+    board: 'all',
+    category: 'all',
+    query: '',
+    sort: 'stars',
+    loading: false,
+    boards: {},     // boardId -> {items, page, total, source, updatedAt, more, note}
+    lastError: '',
+    translateBroken: false,
+  };
+
+  function boardState(boardId) {
+    if (!state.boards[boardId]) {
+      state.boards[boardId] = {
+        items: [], page: 0, total: 0, source: '', updatedAt: 0, more: false, note: '',
+      };
+    }
+    return state.boards[boardId];
+  }
+
+  /* ------------------------------ 缓存 ------------------------------ */
+
+  function readCache(boardId) {
+    var all = readJSON(STORE_KEYS.cache, {});
+    return all[boardId] || null;
+  }
+  function writeCache(boardId, payload) {
+    var all = readJSON(STORE_KEYS.cache, {});
+    all[boardId] = payload;
+    writeJSON(STORE_KEYS.cache, all);
+  }
+
+  /* ------------------------------ 拉取榜单 ------------------------------ */
+
+  function fetchBoardPage(boardId, page) {
+    var path = core.buildSearchPath(boardId, page);
+    var list = adapterList();
+    var tried = [];
+    var deadline = Date.now() + 30000;
+
+    function attempt(idx) {
+      if (idx >= list.length || Date.now() > deadline) {
+        var err = new Error('所有数据源都不可用');
+        err.tried = tried;
+        return Promise.reject(err);
+      }
+      var adapter = list[idx];
+      var url = adapter.url(path);
+      var token = adapter.useToken ? settings.token.trim() : '';
+      return fetchJSON(url, { token: token, timeout: 9000 }).then(function (json) {
+        if (!json || !Array.isArray(json.items)) throw new Error('返回格式异常');
+        writeJSON(STORE_KEYS.api, adapter.id);
+        return { items: json.items, total: json.total_count || json.items.length, adapter: adapter.name };
+      }).catch(function (err) {
+        tried.push(adapter.name + '(' + describeError(err) + ')');
+        return attempt(idx + 1);
+      });
+    }
+    return attempt(0);
+  }
+
+  function snapshotItems() {
+    var list = (SNAP.repos || []).map(function (raw) {
+      var repo = core.toRepo(Object.assign({}, raw, { source: 'snapshot', approx: true }), 'all');
+      if (!repo.descZh) repo.descZh = raw.d || '';
+      return repo;
+    });
+    return core.sortRepos(list, 'stars');
+  }
+
+  function loadBoard(boardId, opts) {
+    opts = opts || {};
+    var board = core.getBoard(boardId);
+    var bs = boardState(boardId);
+    if (state.loading) return;
+
+    if (state.forceSnapshot && !opts.force) {
+      applySnapshot(boardId);
+      return render();
+    }
+
+    if (!opts.force && !opts.page && bs.items.length) return render();
+
+    var cache = readCache(boardId);
+    if (!opts.force && !opts.page && cache && Date.now() - cache.ts < CACHE_TTL) {
+      bs.items = cache.items;
+      bs.page = cache.page || 1;
+      bs.total = cache.total || cache.items.length;
+      bs.source = cache.source || 'live';
+      bs.updatedAt = cache.ts;
+      bs.more = cache.more !== false;
+      bs.note = '';
+      return render();
+    }
+
+    state.loading = true;
+    renderLoading();
+
+    // 刚才整轮都连不上：短时间内直接给快照，不让用户干等
+    if (!opts.force && Date.now() < readJSON(STORE_KEYS.offline, 0)) {
+      state.lastError = '网络暂不可用，稍后会自动重试';
+      applySnapshot(boardId);
+      state.loading = false;
+      return render();
+    }
+
+    fetchBoardPage(boardId, opts.page || 1).then(function (result) {
+      var incoming = result.items.map(function (raw) { return core.toRepo(raw, boardId); });
+      var merged = opts.page && opts.page > 1 ? mergeUnique(bs.items, incoming) : incoming;
+      bs.items = merged;
+      bs.page = opts.page || 1;
+      bs.total = result.total;
+      bs.source = 'live';
+      bs.updatedAt = Date.now();
+      bs.more = bs.page < (board.pages || 1);
+      bs.note = '';
+      state.lastError = '';
+      writeJSON(STORE_KEYS.offline, 0);
+      writeCache(boardId, { ts: bs.updatedAt, items: bs.items, page: bs.page, total: bs.total, source: 'live', more: bs.more });
+    }).catch(function (err) {
+      state.lastError = describeError(err);
+      writeJSON(STORE_KEYS.offline, Date.now() + 120000); // 2 分钟内不再重试
+      if (!bs.items.length) applySnapshot(boardId);
+    }).finally(function () {
+      state.loading = false;
+      render();
+    });
+  }
+
+  // 回退到内置离线快照，并写一份缓存（下次打开不用等网络）
+  // 快照只有总榜数据：其他榜单留空，由空态提示引导
+  function applySnapshot(boardId) {
+    var bs = boardState(boardId);
+    var hasData = boardId === 'all';
+    bs.items = hasData ? snapshotItems() : [];
+    bs.page = 1;
+    bs.total = bs.items.length;
+    bs.source = 'snapshot';
+    bs.updatedAt = Date.now();
+    bs.more = false;
+    bs.note = hasData ? '已使用内置离线快照（星标为近似值）' : '离线快照只包含总榜';
+    writeCache(boardId, { ts: bs.updatedAt, items: bs.items, page: 1, total: bs.total, source: 'snapshot', more: false });
+  }
+
+  function mergeUnique(prev, next) {
+    var seen = {};
+    var out = [];
+    prev.concat(next).forEach(function (repo) {
+      if (seen[repo.fullName]) return;
+      seen[repo.fullName] = true;
+      out.push(repo);
+    });
+    return out;
+  }
+
+  /* ------------------------------ DOM 引用 ------------------------------ */
+
+  var el = {};
+  function $(id) { return document.getElementById(id); }
+
+  function cacheDom() {
+    el.boards = $('boards');
+    el.cats = $('cats');
+    el.search = $('search');
+    el.sort = $('sort');
+    el.refresh = $('refresh');
+    el.theme = $('theme');
+    el.settingsBtn = $('settings-btn');
+    el.list = $('list');
+    el.meta = $('meta');
+    el.banner = $('banner');
+    el.more = $('more');
+    el.empty = $('empty');
+    el.dialog = $('settings-dialog');
+    el.token = $('token-input');
+    el.apiBase = $('api-base-input');
+    el.translate = $('translate-input');
+    el.clearCache = $('clear-cache');
+    el.saveSettings = $('save-settings');
+    el.dialogClose = $('dialog-close');
+    el.toast = $('toast');
+    el.boardDesc = $('board-desc');
+  }
+
+  /* ------------------------------ 渲染 ------------------------------ */
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function renderBoards() {
+    el.boards.innerHTML = core.BOARDS.map(function (b) {
+      var active = b.id === state.board ? ' active' : '';
+      return '<button class="board-tab' + active + '" role="tab" aria-selected="' + (b.id === state.board) +
+        '" data-board="' + b.id + '">' +
+        '<span class="board-name">' + b.name + '</span>' +
+        '<span class="board-sub">' + b.short + '</span>' +
+        '</button>';
+    }).join('');
+  }
+
+  function renderCategories() {
+    var counts = categoryCounts();
+    el.cats.innerHTML = core.CATEGORIES.map(function (c) {
+      var n = c.id === 'all' ? totalCount() : (counts[c.id] || 0);
+      var active = c.id === state.category ? ' active' : '';
+      var disabled = n === 0 && c.id !== 'all' ? ' dim' : '';
+      return '<button class="chip' + active + disabled + '" data-cat="' + c.id + '" title="' + escapeHtml(c.name) +
+        '">' + c.icon + ' ' + c.name + '<span class="chip-n">' + n + '</span></button>';
+    }).join('');
+  }
+
+  function totalCount() {
+    return boardState(state.board).items.length;
+  }
+
+  function categoryCounts() {
+    var counts = {};
+    boardState(state.board).items.forEach(function (r) {
+      counts[r.category] = (counts[r.category] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function visibleItems() {
+    return core.filterRepos(boardState(state.board).items, {
+      category: state.category,
+      query: state.query,
+      sort: state.sort,
+    });
+  }
+
+  function renderMeta() {
+    var bs = boardState(state.board);
+    var board = core.getBoard(state.board);
+    el.boardDesc.textContent = board.desc;
+    if (!bs.items.length) {
+      el.meta.textContent = '';
+      return;
+    }
+    var src = bs.source === 'snapshot' ? '内置离线快照' : 'GitHub API';
+    var updated = bs.updatedAt ? core.formatRelative(new Date(bs.updatedAt).toISOString()) : '';
+    var shown = visibleItems().length;
+    el.meta.innerHTML =
+      '<span>共 <b>' + shown + '</b> 个' + (shown !== bs.items.length ? '（已筛选，总计 ' + bs.items.length + '）' : '') + '</span>' +
+      '<span class="dot">·</span><span>来源：' + src + '</span>' +
+      (updated ? '<span class="dot">·</span><span>更新于 ' + updated + '</span>' : '') +
+      (bs.source === 'live' ? '<span class="dot">·</span><span class="rate-hint">无 Token 时 GitHub 限 10 次/分钟</span>' : '');
+  }
+
+  function renderBanner() {
+    var bs = boardState(state.board);
+    if (bs.source === 'snapshot') {
+      var text = state.forceSnapshot
+        ? '当前是<b>离线快照模式</b>（地址栏 ?snapshot=1），显示内置数据，星标为近似值。'
+        : '联网获取失败，正在显示<b>内置离线快照</b>（星标为近似值）。原因：' +
+          escapeHtml(state.lastError || '网络不可达');
+      el.banner.innerHTML = '<span class="banner-icon">⚠️</span><span>' + text + '</span>' +
+        '<button class="banner-btn" data-act="retry">重试联网</button>';
+      el.banner.hidden = false;
+    } else if (state.lastError) {
+      el.banner.innerHTML = '<span class="banner-icon">⚠️</span><span>刷新失败：' +
+        escapeHtml(state.lastError) + '，当前显示上次数据。</span>' +
+        '<button class="banner-btn" data-act="retry">重试</button>';
+      el.banner.hidden = false;
+    } else {
+      el.banner.hidden = true;
+      el.banner.innerHTML = '';
+    }
+  }
+
+  function rankBadge(i) {
+    var cls = i === 0 ? ' gold' : i === 1 ? ' silver' : i === 2 ? ' bronze' : '';
+    return '<span class="rank' + cls + '">' + (i + 1) + '</span>';
+  }
+
+  function cardHtml(repo, index) {
+    var cat = core.getCategory(repo.category);
+    var stars = (repo.approx ? '≈ ' : '') + core.formatStars(repo.stars);
+    var hasDesc = !!(repo.descZh || repo.descOriginal);
+    var desc = repo.descZh || repo.descOriginal || '（该项目未填写简介）';
+    // 只有「有简介、但不是中文」才打英文原文标记（不少国内项目简介本身就是中文）
+    var isEn = hasDesc && !/[\u4e00-\u9fa5]/.test(desc) && /[a-zA-Z]/.test(desc);
+    var updated = repo.pushedAt ? '<span class="tag">' + core.formatRelative(repo.pushedAt) + '更新</span>' : '';
+    var lang = repo.language
+      ? '<span class="tag"><i class="lang-dot" style="background:' + core.langColor(repo.language) + '"></i>' +
+        escapeHtml(repo.language) + '</span>'
+      : '';
+    var topics = (repo.topics || []).slice(0, 3).map(function (t) {
+      return '<span class="topic">' + escapeHtml(t) + '</span>';
+    }).join('');
+
+    return '<article class="card" data-key="' + escapeHtml(repo.fullName) + '">' +
+      '<div class="card-top">' + rankBadge(index) +
+      '<a class="repo" href="' + escapeHtml(repo.url) + '" target="_blank" rel="noopener noreferrer">' +
+      escapeHtml(repo.fullName) + '</a>' +
+      '<span class="stars" title="' + core.formatFull(repo.stars) + ' 星标">★ ' + stars + '</span>' +
+      '</div>' +
+      '<p class="desc' + (isEn ? ' is-en' : '') + '">' + escapeHtml(desc) +
+      (isEn ? '<span class="en-badge" title="暂无中文简介，显示英文原文">EN</span>' : '') + '</p>' +
+      '<div class="tags">' +
+      '<span class="tag cat">' + cat.icon + ' ' + escapeHtml(cat.name) + '</span>' +
+      lang + updated +
+      '<span class="tag forks">⑂ ' + core.formatStars(repo.forks) + '</span>' +
+      '</div>' +
+      (topics ? '<div class="topics">' + topics + '</div>' : '') +
+      '</article>';
+  }
+
+  function render() {
+    renderBoards();
+    renderCategories();
+    renderMeta();
+    renderBanner();
+
+    var items = visibleItems();
+    var bs = boardState(state.board);
+
+    if (state.loading && !bs.items.length) {
+      renderLoading();
+      return;
+    }
+
+    el.list.innerHTML = items.map(cardHtml).join('');
+
+    if (!items.length) {
+      el.empty.hidden = false;
+      el.empty.innerHTML = bs.source === 'snapshot' && state.board !== 'all'
+        ? '离线快照只包含<b>总榜</b>数据。切回总榜，或联网后点「更新」获取' + core.getBoard(state.board).name + '。'
+        : (bs.items.length
+          ? '没有匹配的项目，换个关键词或分类试试。'
+          : '还没有数据，点右上角「更新」拉取一次。');
+    } else {
+      el.empty.hidden = true;
+    }
+
+    el.more.hidden = !(bs.more && bs.source === 'live' && items.length);
+    el.refresh.classList.toggle('loading', state.loading);
+    el.refresh.disabled = state.loading;
+
+    if (settings.translate && !state.translateBroken && bs.source === 'live') queueTranslate(items);
+  }
+
+  function renderLoading() {
+    el.list.innerHTML = new Array(6).fill(0).map(function () {
+      return '<div class="card skeleton"><div class="sk-line w60"></div><div class="sk-line w90"></div>' +
+        '<div class="sk-line w40"></div></div>';
+    }).join('');
+    el.empty.hidden = true;
+    el.more.hidden = true;
+  }
+
+  /* ------------------------------ 简介机器翻译（可选） ------------------------------ */
+
+  var zhCache = readJSON(STORE_KEYS.zh, {});
+  var translating = {};
+  var failStreak = 0;
+
+  function queueTranslate(items) {
+    if (!navigator.onLine) return;
+    var pending = items.filter(function (r) {
+      return !r.descZh && r.descOriginal && /[a-zA-Z]{3}/.test(r.descOriginal) &&
+        !/[\u4e00-\u9fa5]/.test(r.descOriginal) && !translating[r.fullName];
+    }).slice(0, 14);
+
+    pending.forEach(function (repo, i) {
+      setTimeout(function () { translateRepo(repo); }, i * 200);
+    });
+  }
+
+  function translateRepo(repo) {
+    if (repo.descZh || translating[repo.fullName]) return;
+    var known = zhCache[repo.fullName] || core.lookupZh(repo.fullName);
+    if (known) {
+      repo.descZh = known;
+      patchDesc(repo);
+      return;
+    }
+    translating[repo.fullName] = true;
+    var text = repo.descOriginal.slice(0, 180);
+    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|zh-CN';
+
+    fetchJSON(url, { timeout: 9000 }).then(function (json) {
+      var out = json && json.responseData && json.responseData.translatedText;
+      if (!out || /MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(out)) throw new Error('翻译不可用');
+      zhCache[repo.fullName] = out;
+      writeJSON(STORE_KEYS.zh, zhCache);
+      repo.descZh = out;
+      failStreak = 0;
+      patchDesc(repo);
+    }).catch(function () {
+      failStreak++;
+      if (failStreak >= 3) {
+        state.translateBroken = true;
+      }
+    }).finally(function () {
+      delete translating[repo.fullName];
+    });
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(value);
+    return String(value).replace(/["\\]/g, '\\$&');
+  }
+
+  function patchDesc(repo) {
+    var node = el.list.querySelector('.card[data-key="' + cssEscape(repo.fullName) + '"] .desc');
+    if (!node) return;
+    var en = node.querySelector('.en-badge');
+    if (en) en.remove();
+    node.classList.remove('is-en');
+    node.textContent = repo.descZh;
+  }
+
+  /* ------------------------------ 提示条 ------------------------------ */
+
+  var toastTimer = null;
+  function toast(msg, kind) {
+    el.toast.textContent = msg;
+    el.toast.className = 'toast show' + (kind ? ' ' + kind : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.toast.className = 'toast'; }, 3200);
+  }
+
+  /* ------------------------------ 主题 ------------------------------ */
+
+  function applyTheme() {
+    var theme = settings.theme;
+    if (theme === 'auto') {
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    } else {
+      document.documentElement.dataset.theme = theme;
+    }
+    el.theme.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
+    el.theme.setAttribute('aria-label', document.documentElement.dataset.theme === 'dark' ? '切换到浅色' : '切换到深色');
+  }
+
+  /* ------------------------------ 事件绑定 ------------------------------ */
+
+  function bind() {
+    el.boards.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-board]');
+      if (!btn) return;
+      state.board = btn.dataset.board;
+      state.category = 'all';
+      loadBoard(state.board, {});
+    });
+
+    el.cats.addEventListener('click', function (e) {
+      var chip = e.target.closest('[data-cat]');
+      if (!chip) return;
+      state.category = chip.dataset.cat;
+      render();
+    });
+
+    var searchTimer = null;
+    el.search.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        state.query = el.search.value;
+        render();
+      }, 150);
+    });
+
+    el.sort.addEventListener('change', function () {
+      state.sort = el.sort.value;
+      render();
+    });
+
+    el.refresh.addEventListener('click', function () {
+      loadBoard(state.board, { force: true });
+      toast('正在从 GitHub 拉取最新数据…');
+    });
+
+    el.more.addEventListener('click', function () {
+      var bs = boardState(state.board);
+      loadBoard(state.board, { page: (bs.page || 1) + 1 });
+    });
+
+    el.theme.addEventListener('click', function () {
+      var current = document.documentElement.dataset.theme;
+      settings.theme = current === 'dark' ? 'light' : 'dark';
+      saveSettings();
+      applyTheme();
+    });
+
+    el.banner.addEventListener('click', function (e) {
+      if (e.target.dataset.act === 'retry') loadBoard(state.board, { force: true });
+    });
+
+    el.settingsBtn.addEventListener('click', function () {
+      el.token.value = settings.token;
+      el.apiBase.value = settings.apiBase;
+      el.translate.checked = settings.translate;
+      if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
+      else el.dialog.setAttribute('open', '');
+    });
+
+    el.dialogClose.addEventListener('click', function () { el.dialog.close(); });
+
+    el.saveSettings.addEventListener('click', function () {
+      settings.token = el.token.value.trim();
+      settings.apiBase = el.apiBase.value.trim();
+      settings.translate = el.translate.checked;
+      saveSettings();
+      el.dialog.close();
+      toast('设置已保存，正在刷新…');
+      loadBoard(state.board, { force: true });
+    });
+
+    el.clearCache.addEventListener('click', function () {
+      try { window.localStorage.removeItem(STORE_KEYS.cache); } catch (e) { /* ignore */ }
+      state.boards = {};
+      el.dialog.close();
+      toast('本地缓存已清除');
+      loadBoard(state.board, { force: true });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === '/' && document.activeElement !== el.search) {
+        e.preventDefault();
+        el.search.focus();
+      }
+      if (e.key === 'Escape' && el.search === document.activeElement) el.search.blur();
+    });
+
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var onChange = function () { if (settings.theme === 'auto') applyTheme(); };
+      if (mq.addEventListener) mq.addEventListener('change', onChange);
+    }
+  }
+
+  /* ------------------------------ 启动 ------------------------------ */
+
+  function init() {
+    cacheDom();
+    applyTheme();
+    el.sort.innerHTML = core.SORTS.map(function (s) {
+      return '<option value="' + s.id + '">' + s.name + '</option>';
+    }).join('');
+    el.sort.value = state.sort;
+    bind();
+
+    // 地址栏加 ?snapshot=1 可以强制用内置离线数据（演示 / 没网时很好用）
+    state.forceSnapshot = /[?&]snapshot=1\b/.test(window.location.search);
+
+    var bs = boardState('all');
+    var cache = state.forceSnapshot ? null : readCache('all');
+    if (cache && Date.now() - cache.ts < CACHE_TTL) {
+      bs.items = cache.items;
+      bs.page = cache.page || 1;
+      bs.total = cache.total || 0;
+      bs.source = cache.source || 'live';
+      bs.updatedAt = cache.ts;
+      bs.more = cache.more !== false;
+      render();
+    } else if (state.forceSnapshot) {
+      state.lastError = '已启用离线快照模式（地址栏 ?snapshot=1）';
+      applySnapshot('all');
+      render();
+    } else {
+      loadBoard('all', {});
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+</body>
+</html>

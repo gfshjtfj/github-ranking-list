@@ -2,11 +2,22 @@
 
 一个**单页、零依赖、无需构建**的 GitHub 高星项目排行榜：总榜 / 年榜 / 月榜 / 周榜，可按类别筛选、搜索、排序，右上角一键更新，桌面和手机都能用，支持深色模式。
 
-> **在线体验**：这里要填你自己的 Pages 地址，格式是 `https://<你的用户名>.github.io/<仓库名>/`。
-> 开启 Pages 成功后，地址会显示在仓库 **Settings → Pages** 页面顶部（`Your site is live at …`），把那串地址替换上来即可。
-> 只有在 Pages 已经构建成功的前提下这个地址才打得开，否则一律是 404。
+> **在线体验**：暂未部署在线演示。下载仓库后双击 `index.html` 即可运行（联网拉 GitHub 实时数据，断网自动用内置快照）。
+> 想挂到网上，按下方「部署到 GitHub Pages」三步操作，拿到地址后把这一行替换成真链接。
 
 本地直接双击 `index.html` 就能打开（不需要装环境、不需要起服务）。
+
+## 在线预览与下载
+
+**在线预览不需要自己买服务器、不需要部署后端**：整站是纯静态的（HTML + CSS + 原生 JS，没有构建步骤、也没有数据库），推到 GitHub 后开启 GitHub Pages 就得到一个公开网址，别人点开即用。
+
+| 想做的事 | 怎么做 |
+| --- | --- |
+| 让所有人在浏览器里打开 | 开启 GitHub Pages（见下方「部署到 GitHub Pages」） |
+| 下载完整源码 | 仓库页绿色 **Code ▾** → **Download ZIP**，解压后双击 `index.html` |
+| 下载「即点即用」的单文件 | 到 Releases 下载 `github-star-ranking.html`（约 84 KB），一个文件双击就能跑，CSS/JS/离线快照都内联在里面 |
+
+单文件版由 `node tools/build-standalone.mjs` 从源码自动生成，改完源码重新跑一次即可。
 
 ![桌面端](preview/desktop.png)
 
@@ -89,8 +100,10 @@ github-star-ranking/
 ├── app.js          界面渲染 + 网络请求 + 缓存 + 设置
 ├── tests/
 │   └── selftest.js Node 自测（分类 / 查询 / 链接 / 排序 / 格式化 / 快照完整性）
-├── tools/          开发用无头浏览器验证脚本（可选，需要 Edge）
+├── tools/          开发脚本：无头浏览器验证 + 单文件版打包
 ├── preview/        截图
+├── dist/
+│   └── github-star-ranking.html  单文件版（自动生成，可直接双击）
 ├── LICENSE         MIT
 └── .nojekyll       告诉 GitHub Pages 不要跑 Jekyll
 ```
@@ -111,7 +124,7 @@ github-star-ranking/
 - 仓库 **Actions** 标签里有没有失败的 `pages build and deployment`？失败点进去看报错。
 - 仓库是 Private 的话，Pages 需要 Pro/Team 才能用；公开仓库免费。
 
-## 自测
+## 自测与打包
 
 ```bash
 # 纯逻辑自测（67 项，不需要浏览器）
@@ -120,6 +133,9 @@ node tests/selftest.js
 # 界面冒烟测试（27 项，需要 Edge/Chrome，离线快照模式即可跑）
 msedge --headless=new --remote-debugging-port=9334 --user-data-dir=%TEMP%\eg about:blank
 node tools/ui-smoke.mjs --url=file:///<绝对路径>/index.html?snapshot=1 --port=9334
+
+# 生成 dist/github-star-ranking.html 单文件版
+node tools/build-standalone.mjs
 ```
 
 ## 已知限制
