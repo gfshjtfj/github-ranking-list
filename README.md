@@ -4,6 +4,8 @@
 
 单个静态页面，零依赖、零构建、没有后端，断网也能打开（内置离线快照）。
 
+> **在线体验**：https://gfshjtfj.github.io/github-ranking-list/
+
 `MIT License` · `零依赖` · `原生 JS` · `无构建` · `单文件 84 KB` · `响应式`
 
 ![桌面端界面](preview/desktop.png)
@@ -42,23 +44,23 @@
 不需要安装任何东西，直接打开页面即可：
 
 ```bash
-git clone https://github.com/<用户名>/<仓库名>.git
-cd <仓库名>
+git clone https://github.com/gfshjtfj/github-ranking-list.git
+cd github-ranking-list
 # 双击 index.html，或用任意静态服务器：
 # python -m http.server 8000
 ```
 
-只想要一个文件？`dist/github-star-ranking.html` 是自包含单文件版，下载后双击就能跑。
+只想要一个文件？`dist/github-ranking-list.html` 是自包含单文件版，下载后双击就能跑。
 
 ## 部署到 GitHub Pages
 
-这是一个纯静态站点，GitHub Pages 可以直接托管，无需构建：
+本项目是纯静态站点，GitHub Pages 可直接托管，无需构建：
 
 1. 把代码推到仓库的 `main` 分支。
 2. 仓库 **Settings → Pages**，Source 选 **Deploy from a branch**，Branch 选 `main` + `/ (root)`，保存。
-3. 约 1–2 分钟后，`https://<用户名>.github.io/<仓库名>/` 即可访问。
+3. 约 1–2 分钟后，`https://gfshjtfj.github.io/github-ranking-list/` 即可访问。
 
-> `.nojekyll` 已包含在仓库中，用于跳过 Jekyll 处理；所有资源使用相对路径，部署在子路径下也能正常工作。
+> `.nojekyll` 用于跳过 Jekyll 处理；所有资源使用相对路径，部署在子路径下也能正常工作。
 
 常见 404 原因：`index.html` 不在仓库根目录、Pages 分支 / 目录选错、仓库为私有（免费账号的 Pages 仅支持公开仓库）、Actions 里的 `pages build and deployment` 构建失败。
 
@@ -101,7 +103,7 @@ Token 只保存在浏览器 localStorage，只会发送给 `api.github.com`，�
 ## 项目结构
 
 ```
-github-star-ranking/
+github-ranking-list/
 ├── index.html      页面结构
 ├── styles.css      样式（主题变量 + 响应式）
 ├── core.js         纯逻辑：榜单定义、分类器、查询构造、筛选排序、格式化
@@ -112,7 +114,7 @@ github-star-ranking/
 ├── tools/          无头浏览器验证脚本、单文件打包脚本
 ├── preview/        截图
 ├── dist/
-│   └── github-star-ranking.html   单文件版（构建产物）
+│   └── github-ranking-list.html   单文件版（构建产物）
 ├── LICENSE         MIT
 └── .nojekyll
 ```
